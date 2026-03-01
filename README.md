@@ -1,54 +1,41 @@
 # Webhook Receiver + Event Log Demo
 
-這是一個可直接本機 demo 的 webhook 接收器，提供：
+A minimal local demo for receiving webhook payloads and inspecting them in a browser.
 
-- `POST /webhook` 接收 JSON payload
-- `GET /api/events` 查詢目前 event log
-- `POST /api/events/clear` 清空 event log
-- `/` 瀏覽器頁面查看事件列表
+This project provides:
 
-本專案只使用 Python 標準函式庫，不需要額外安裝套件。
+- `POST /webhook` to receive JSON payloads
+- `GET /api/events` to inspect the latest captured events
+- `POST /api/events/clear` to reset the demo log
+- `GET /api/health` for a simple health check
+- a browser UI at `/` to view the event log
 
-## 專案位置
+The app uses only Python standard library modules, so there are no extra dependencies to install.
 
-```powershell
-c:\Users\yang4\Desktop\vibe code 專案\Webhook Receiver
-```
+## Demo Highlights
 
-## 啟動方式
+- Fast local setup for demos and testing
+- Browser-based event log viewer
+- PowerShell-friendly verification flow
+- Event persistence in `data/events.jsonl`
 
-在專案目錄執行：
+## Run
+
+Start the server from the project directory:
 
 ```powershell
 python .\app.py
 ```
 
-啟動後打開：
+Open:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-## 功能驗證
+## Quick Manual Test
 
-### 1. 健康檢查
-
-```powershell
-Invoke-RestMethod -Method GET `
-  -Uri "http://127.0.0.1:8000/api/health"
-```
-
-預期會回傳類似：
-
-```json
-{
-  "status": "ok",
-  "events": 0,
-  "timestamp": "2026-03-01T00:00:00+00:00"
-}
-```
-
-### 2. 發送測試 webhook
+Send a webhook from PowerShell:
 
 ```powershell
 Invoke-RestMethod -Method POST `
@@ -57,102 +44,73 @@ Invoke-RestMethod -Method POST `
   -Body '{"event":"order.created","orderId":12345,"source":"demo"}'
 ```
 
-預期會回傳類似：
-
-```json
-{
-  "message": "Webhook received",
-  "event_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "received_at": "2026-03-01T00:00:00+00:00"
-}
-```
-
-### 3. 查詢 event log
+Fetch the event log:
 
 ```powershell
 Invoke-RestMethod -Method GET `
   -Uri "http://127.0.0.1:8000/api/events"
 ```
 
-預期在 `events` 陣列中看到剛剛送出的 payload：
+## Automated Demo Test
 
-```json
-{
-  "event": "order.created",
-  "orderId": 12345,
-  "source": "demo"
-}
-```
-
-### 4. 驗證前端頁面
-
-打開首頁後確認：
-
-- `Event Log` 會顯示新收到的事件
-- 點 `Refresh` 可以重新抓最新資料
-- 點 `Clear Log` 可以清空事件列表
-
-### 5. 清空 event log
+Run the verification script:
 
 ```powershell
-Invoke-RestMethod -Method POST `
-  -Uri "http://127.0.0.1:8000/api/events/clear"
+.\demo-test.ps1
 ```
 
-之後重新整理首頁，應該會看到空的事件列表。
+Optional parameters:
 
-## API 一覽
+```powershell
+.\demo-test.ps1 -BaseUrl "http://127.0.0.1:8000" -KeepData
+```
+
+What the script checks:
+
+1. `GET /api/health`
+2. `POST /webhook`
+3. `GET /api/events`
+4. `POST /api/events/clear` unless `-KeepData` is used
+
+The script exits with a non-zero code if any check fails.
+
+## API
 
 ### `POST /webhook`
 
-接收 webhook payload。若 body 是合法 JSON，系統會解析並寫入 event log；若不是合法 JSON，系統會以 `raw_body` 形式保存原始內容。
+Receives a webhook payload. If the request body is valid JSON, it is parsed and stored in the event log. If the body is not valid JSON, the raw request body is stored under `raw_body`.
 
 ### `GET /api/events`
 
-回傳目前記錄的事件列表。
+Returns the current event log as JSON.
 
 ### `POST /api/events/clear`
 
-清空目前所有事件。
+Clears all current demo events.
 
 ### `GET /api/health`
 
-回傳服務狀態與目前事件數量。
+Returns service status and the current event count.
 
-## 資料儲存
+## Storage
 
-事件資料會：
+Captured events are:
 
-- 存在記憶體中供前端即時讀取
-- 同步寫入 `data/events.jsonl`
+- kept in memory for the live UI
+- appended to `data/events.jsonl`
 
-## 常見問題
+## PowerShell Notes
 
-### 為什麼 PowerShell 用 `curl` 會報錯？
-
-因為在 PowerShell 中，`curl` 常常是 `Invoke-WebRequest` 的別名，不是一般的 curl。
-
-建議用：
-
-```powershell
-curl.exe
-```
-
-或直接使用：
+In PowerShell, `curl` is often an alias for `Invoke-WebRequest`, not the standard curl CLI. To avoid quoting issues, prefer:
 
 ```powershell
 Invoke-RestMethod
 ```
 
-### 為什麼 event log 裡看到 `raw_body`？
-
-這表示送到 `/webhook` 的內容不是合法 JSON，通常是 PowerShell 的引號跳脫寫錯。
-
-請使用這種格式：
+or explicitly use:
 
 ```powershell
-Invoke-RestMethod -Method POST `
-  -Uri "http://127.0.0.1:8000/webhook" `
-  -ContentType "application/json" `
-  -Body '{"event":"order.created","orderId":12345,"source":"demo"}'
+curl.exe
 ```
+
+If you see `raw_body` in the event log, the request body was not valid JSON. Use single quotes around the JSON string in PowerShell.
