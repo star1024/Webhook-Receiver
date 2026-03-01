@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Webhook Receiver Demo</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">Demo</p>
+        <h1>Webhook Receiver + Event Log</h1>
+        <p class="lead">
+          Receive webhook payloads at <code>/webhook</code>, inspect them in real time,
+          and reset the log during demos.
+        </p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Endpoints</h2>
+            <p>Use these directly in Postman, curl, or another service.</p>
+          </div>
+          <button id="clearButton" class="ghost">Clear Log</button>
+        </div>
+
+        <div class="endpoint-grid">
+          <article>
+            <span class="method post">POST</span>
+            <code>/webhook</code>
+            <p>Receive any JSON payload and append it to the event log.</p>
+          </article>
+          <article>
+            <span class="method get">GET</span>
+            <code>/api/events</code>
+            <p>Fetch the latest captured events.</p>
+          </article>
+          <article>
+            <span class="method get">GET</span>
+            <code>/api/health</code>
+            <p>Simple health check for local demos.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Quick Test</h2>
+            <p>Paste this PowerShell sample into your terminal.</p>
+          </div>
+        </div>
+        <pre id="sampleCommand"></pre>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Event Log</h2>
+            <p id="eventCount">Loading...</p>
+          </div>
+          <button id="refreshButton">Refresh</button>
+        </div>
+        <div id="emptyState" class="empty hidden">
+          No events yet. Send a POST request to <code>/webhook</code>.
+        </div>
+        <div id="eventList" class="event-list"></div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
